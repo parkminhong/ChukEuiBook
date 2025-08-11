@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>축의금 관리 장부 (Wedding Gift Manager)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 폰트 설정 */
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+        }
+        /* 테이블 컨테이너 높이 조정 */
+        .table-container {
+            max-height: 45vh; /* 높이 줄임 */
+            overflow-y: auto;
+        }
+        /* 스크롤바 디자인 */
+        .table-container::-webkit-scrollbar { width: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; }
+        .table-container::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #555; }
+        /* 금액 버튼 클릭 시 효과 */
+        .amount-btn:active {
+            transform: scale(0.95);
+        }
+        /* 블러 처리 스타일 */
+        .blurred-content {
+            filter: blur(8px);
+            transition: filter 0.3s ease-in-out;
+            user-select: none;
+            pointer-events: none;
+        }
+        /* 버튼 비활성화 스타일 */
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        button:disabled:hover {
+            background-color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <!-- 헤더 -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">축의금 관리 장부</h1>
+            <p class="text-gray-600 mt-2">Wedding Gift Manager</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- 왼쪽: 입력 폼 -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-md sticky top-8">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">하객 정보 추가</h2>
+                    <form id="guest-form" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">이름</label>
+                            <input type="text" id="name" name="name" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">금액</label>
+                            <div class="mt-1 p-3 bg-gray-100 rounded-md text-center">
+                                <span id="current-amount-display" class="text-2xl font-bold text-indigo-600">0 원</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 mt-2">
+                                <button type="button" data-amount="10000" class="amount-btn col-span-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all">+ 1만원</button>
+                                <button type="button" data-amount="50000" class="amount-btn col-span-1 bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-all">+ 5만원</button>
+                                <button type="button" id="reset-amount-btn" class="amount-btn col-span-1 bg-gray-400 text-white py-2 rounded-md hover:bg-gray-500 transition-all">초기화</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="side" class="block text-sm font-medium text-gray-700">구분</label>
+                                <select id="side" name="side" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="신랑">신랑</option>
+                                    <option value="신부">신부</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="relationship" class="block text-sm font-medium text-gray-700">관계</label>
+                                <select id="relationship" name="relationship" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="친구">친구</option>
+                                    <option value="직장">직장</option>
+                                    <option value="가족/친척">가족/친척</option>
+                                    <option value="지인/기타">지인/기타</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="tickets" class="block text-sm font-medium text-gray-700">불출 식권 수</label>
+                            <input type="number" id="tickets" name="tickets" required min="0" placeholder="예: 2" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+
+                        <div>
+                            <label for="memo" class="block text-sm font-medium text-gray-700">메모</label>
+                            <input type="text" id="memo" name="memo" placeholder="동반 하객, 특이사항 등" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        <button type="submit" id="add-guest-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors text-lg">
+                            추가하기
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 목록, 통계, 그래프 -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- 하객 목록 -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <h2 class="text-xl font-semibold">하객 목록</h2>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <input type="search" id="search-box" placeholder="이름으로 검색..." class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <button id="export-csv" title="엑셀(CSV) 파일로 내보내기" class="flex-shrink-0 bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="filter-buttons" class="flex space-x-2 mb-4 border-b pb-2">
+                        <button data-filter="all" class="filter-btn bg-indigo-600 text-white px-3 py-1 text-sm rounded-full">전체</button>
+                        <button data-filter="groom" class="filter-btn bg-gray-200 text-gray-700 px-3 py-1 text-sm rounded-full">신랑측</button>
+                        <button data-filter="bride" class="filter-btn bg-gray-200 text-gray-700 px-3 py-1 text-sm rounded-full">신부측</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">구분</th>
+                                    <th scope="col" class="px-4 py-3">이름</th>
+                                    <th scope="col" class="px-4 py-3">금액</th>
+                                    <th scope="col" class="px-4 py-3">관계</th>
+                                    <th scope="col" class="px-4 py-3">식권</th>
+                                    <th scope="col" class="px-4 py-3 text-center">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="guest-list" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                    <p id="empty-message" class="text-center text-gray-500 py-10">등록된 하객 정보가 없습니다.</p>
+                </div>
+                
+                <!-- 통계, 식권, 그래프 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div id="summary" class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h2 class="text-xl font-semibold">종합 현황</h2>
+                            <button id="toggle-summary-blur" title="현황 가리기/보기" class="text-gray-500 hover:text-gray-800 transition-colors">
+                                <svg id="summary-eye-open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                <svg id="summary-eye-closed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                            </button>
+                        </div>
+                        <div id="summary-content" class="space-y-3 text-gray-700">
+                            <div class="flex justify-between items-center"><span class="font-medium">총 하객 수:</span><span id="total-guests" class="font-bold text-lg text-indigo-600">0 명</span></div>
+                            <div class="flex justify-between items-center"><span class="font-medium">총 축의금:</span><span id="total-amount" class="font-bold text-lg text-indigo-600">0 원</span></div>
+                            <hr class="my-2">
+                            <div class="flex justify-between items-center"><span class="font-medium">신랑측 총액:</span><span id="groom-total" class="font-semibold">0 원</span></div>
+                            <div class="flex justify-between items-center"><span class="font-medium">신부측 총액:</span><span id="bride-total" class="font-semibold">0 원</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-semibold mb-4 border-b pb-2">식권 현황</h2>
+                        <div class="space-y-3">
+                            <div>
+                                <label for="guaranteed-headcount" class="block text-sm font-medium text-gray-700">보증 인원 설정</label>
+                                <input type="number" id="guaranteed-headcount" min="0" placeholder="예: 200" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                            </div>
+                            <div class="text-center pt-2">
+                                <p class="text-gray-600">총 불출 식권</p>
+                                <p id="total-tickets-issued" class="text-2xl font-bold text-teal-600">0 장</p>
+                                <p id="headcount-status" class="text-sm font-medium mt-1">&nbsp;</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h2 class="text-xl font-semibold">비율</h2>
+                             <button id="toggle-chart-blur" title="비율 가리기/보기" class="text-gray-500 hover:text-gray-800 transition-colors">
+                                <svg id="chart-eye-open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                <svg id="chart-eye-closed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                            </button>
+                        </div>
+                        <div id="chart-container" class="relative flex items-center justify-center" style="min-height: 180px;">
+                            <canvas id="relationship-chart"></canvas>
+                            <div id="chart-blur-overlay" class="absolute inset-0 bg-gray-900 hidden"></div>
+                            <p id="chart-empty-message" class="text-center text-gray-500 hidden">데이터가 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM 요소
+            const guestForm = document.getElementById('guest-form');
+            const guestList = document.getElementById('guest-list');
+            const searchBox = document.getElementById('search-box');
+            const filterButtons = document.getElementById('filter-buttons');
+            const exportCsvButton = document.getElementById('export-csv');
+            const emptyMessage = document.getElementById('empty-message');
+            const currentAmountDisplay = document.getElementById('current-amount-display');
+            const resetAmountBtn = document.getElementById('reset-amount-btn');
+            const addGuestBtn = document.getElementById('add-guest-btn');
+            const nameInput = document.getElementById('name');
+            const ticketsInput = document.getElementById('tickets');
+            
+            const summaryContent = document.getElementById('summary-content');
+            const toggleSummaryBlurBtn = document.getElementById('toggle-summary-blur');
+            const summaryEyeOpen = document.getElementById('summary-eye-open');
+            const summaryEyeClosed = document.getElementById('summary-eye-closed');
+
+            const guaranteedHeadcountInput = document.getElementById('guaranteed-headcount');
+            const totalTicketsIssuedDisplay = document.getElementById('total-tickets-issued');
+            const headcountStatusDisplay = document.getElementById('headcount-status');
+
+            const chartContainer = document.getElementById('chart-container');
+            const chartCanvas = document.getElementById('relationship-chart');
+            const chartBlurOverlay = document.getElementById('chart-blur-overlay');
+            const chartEmptyMessage = document.getElementById('chart-empty-message');
+            const toggleChartBlurBtn = document.getElementById('toggle-chart-blur');
+            const chartEyeOpen = document.getElementById('chart-eye-open');
+            const chartEyeClosed = document.getElementById('chart-eye-closed');
+
+            // 상태 변수
+            let guests = [];
+            let guaranteedHeadcount = 0;
+            let currentAmount = 0;
+            let currentFilter = 'all';
+            let searchTerm = '';
+            let isSummaryBlurred = false;
+            let isChartBlurred = false;
+            let chartInstance = null;
+            
+            // 데이터 버전 관리
+            const GUEST_DATA_KEY = 'weddingGiftManagerData_v5';
+            const HEADCOUNT_KEY = 'weddingGiftManagerHeadcount_v5';
+            const SUMMARY_BLUR_KEY = 'weddingGiftManagerSummaryBlurState_v5';
+            const CHART_BLUR_KEY = 'weddingGiftManagerChartBlurState_v5';
+
+            // --- 데이터 로드 및 저장 ---
+            const loadData = () => {
+                const savedGuests = localStorage.getItem(GUEST_DATA_KEY);
+                if (savedGuests) guests = JSON.parse(savedGuests);
+
+                const savedHeadcount = localStorage.getItem(HEADCOUNT_KEY);
+                if (savedHeadcount) guaranteedHeadcount = parseInt(savedHeadcount, 10);
+
+                isSummaryBlurred = localStorage.getItem(SUMMARY_BLUR_KEY) === 'true';
+                isChartBlurred = localStorage.getItem(CHART_BLUR_KEY) === 'true';
+            };
+
+            const saveData = () => {
+                localStorage.setItem(GUEST_DATA_KEY, JSON.stringify(guests));
+                localStorage.setItem(HEADCOUNT_KEY, guaranteedHeadcount);
+                localStorage.setItem(SUMMARY_BLUR_KEY, isSummaryBlurred);
+                localStorage.setItem(CHART_BLUR_KEY, isChartBlurred);
+            };
+
+            // --- 렌더링 함수 ---
+            const renderChart = () => {
+                const groomTotal = guests.filter(g => g.side === '신랑').reduce((sum, g) => sum + Number(g.amount), 0);
+                const brideTotal = guests.filter(g => g.side === '신부').reduce((sum, g) => sum + Number(g.amount), 0);
+
+                if (chartInstance) chartInstance.destroy();
+                
+                const noData = groomTotal === 0 && brideTotal === 0;
+                chartCanvas.classList.toggle('hidden', noData);
+                chartEmptyMessage.classList.toggle('hidden', !noData);
+
+                if (noData) return;
+
+                chartInstance = new Chart(chartCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['신랑측', '신부측'],
+                        datasets: [{ data: [groomTotal, brideTotal], backgroundColor: ['#3b82f6', '#ec4899'], borderColor: ['#ffffff'], borderWidth: 2 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: { callbacks: { label: (c) => `${c.label || ''}: ${new Intl.NumberFormat('ko-KR').format(c.parsed)} 원` } }
+                        }
+                    }
+                });
+            };
+
+            const applyBlurStates = () => {
+                summaryContent.classList.toggle('blurred-content', isSummaryBlurred);
+                summaryEyeOpen.classList.toggle('hidden', isSummaryBlurred);
+                summaryEyeClosed.classList.toggle('hidden', !isSummaryBlurred);
+                
+                chartBlurOverlay.classList.toggle('hidden', !isChartBlurred);
+                chartEyeOpen.classList.toggle('hidden', isChartBlurred);
+                chartEyeClosed.classList.toggle('hidden', !isChartBlurred);
+            };
+
+            const render = () => {
+                let filteredGuests = guests;
+                if (currentFilter === 'groom') filteredGuests = guests.filter(g => g.side === '신랑');
+                else if (currentFilter === 'bride') filteredGuests = guests.filter(g => g.side === '신부');
+                if (searchTerm) filteredGuests = filteredGuests.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                guestList.innerHTML = '';
+                const showEmpty = filteredGuests.length === 0;
+                emptyMessage.classList.toggle('hidden', !showEmpty);
+                guestList.classList.toggle('hidden', showEmpty);
+
+                if (!showEmpty) {
+                    filteredGuests.forEach(guest => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'bg-white hover:bg-gray-50';
+                        tr.innerHTML = `
+                            <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${guest.side === '신랑' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}">${guest.side}</span></td>
+                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">${guest.name}</td>
+                            <td class="px-4 py-3">${Number(guest.amount).toLocaleString()} 원</td>
+                            <td class="px-4 py-3">${guest.relationship}</td>
+                            <td class="px-4 py-3 text-center">${guest.tickets}</td>
+                            <td class="px-4 py-3 text-center">
+                                <button data-id="${guest.id}" class="delete-btn text-red-500 hover:text-red-700 font-medium">삭제</button>
+                            </td>
+                        `;
+                        guestList.appendChild(tr);
+                    });
+                }
+                updateSummaryAndTickets();
+                updateFilterButtons();
+                renderChart();
+            };
+            
+            const updateSummaryAndTickets = () => {
+                const totalGuests = guests.length;
+                const totalAmount = guests.reduce((sum, g) => sum + Number(g.amount), 0);
+                const groomTotal = guests.filter(g => g.side === '신랑').reduce((sum, g) => sum + Number(g.amount), 0);
+                const brideTotal = guests.filter(g => g.side === '신부').reduce((sum, g) => sum + Number(g.amount), 0);
+                const totalTickets = guests.reduce((sum, g) => sum + Number(g.tickets), 0);
+
+                document.getElementById('total-guests').textContent = `${totalGuests.toLocaleString()} 명`;
+                document.getElementById('total-amount').textContent = `${totalAmount.toLocaleString()} 원`;
+                document.getElementById('groom-total').textContent = `${groomTotal.toLocaleString()} 원`;
+                document.getElementById('bride-total').textContent = `${brideTotal.toLocaleString()} 원`;
+                
+                totalTicketsIssuedDisplay.textContent = `${totalTickets.toLocaleString()} 장`;
+                guaranteedHeadcountInput.value = guaranteedHeadcount > 0 ? guaranteedHeadcount : '';
+                
+                const remaining = guaranteedHeadcount - totalTickets;
+                if (guaranteedHeadcount > 0) {
+                    if (remaining > 0) {
+                        headcountStatusDisplay.textContent = `${remaining}명 남음`;
+                        headcountStatusDisplay.className = 'text-sm font-medium mt-1 text-blue-600';
+                    } else if (remaining < 0) {
+                        headcountStatusDisplay.textContent = `${Math.abs(remaining)}명 초과`;
+                        headcountStatusDisplay.className = 'text-sm font-medium mt-1 text-red-600';
+                    } else {
+                        headcountStatusDisplay.textContent = '보증 인원 충족';
+                        headcountStatusDisplay.className = 'text-sm font-medium mt-1 text-green-600';
+                    }
+                } else {
+                    headcountStatusDisplay.innerHTML = '&nbsp;';
+                }
+            };
+
+            const updateFilterButtons = () => {
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    const isActive = btn.dataset.filter === currentFilter;
+                    btn.classList.toggle('bg-indigo-600', isActive);
+                    btn.classList.toggle('text-white', isActive);
+                    btn.classList.toggle('bg-gray-200', !isActive);
+                    btn.classList.toggle('text-gray-700', !isActive);
+                });
+            };
+
+            const validateForm = () => {
+                const nameValid = nameInput.value.trim() !== '';
+                const ticketsValid = ticketsInput.value.trim() !== '' && parseInt(ticketsInput.value, 10) >= 0;
+                addGuestBtn.disabled = !(nameValid && ticketsValid);
+            };
+
+            // --- 이벤트 핸들러 ---
+            [nameInput, ticketsInput].forEach(input => input.addEventListener('input', validateForm));
+
+            toggleSummaryBlurBtn.addEventListener('click', () => { isSummaryBlurred = !isSummaryBlurred; saveData(); applyBlurStates(); });
+            toggleChartBlurBtn.addEventListener('click', () => { isChartBlurred = !isChartBlurred; saveData(); applyBlurStates(); });
+
+            guestForm.addEventListener('click', (e) => {
+                if (e.target.classList.contains('amount-btn')) {
+                    const amount = Number(e.target.dataset.amount);
+                    if (amount > 0) { currentAmount += amount; document.getElementById('current-amount-display').textContent = `${currentAmount.toLocaleString()} 원`; }
+                }
+            });
+
+            resetAmountBtn.addEventListener('click', () => { currentAmount = 0; document.getElementById('current-amount-display').textContent = `0 원`; });
+
+            guestForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (addGuestBtn.disabled) return;
+                if (currentAmount === 0 && !confirm('금액이 0원입니다. 그대로 추가하시겠습니까?')) return;
+                
+                guests.unshift({
+                    id: Date.now(), name: nameInput.value, amount: currentAmount,
+                    side: document.getElementById('side').value, 
+                    relationship: document.getElementById('relationship').value,
+                    tickets: parseInt(ticketsInput.value, 10),
+                    memo: document.getElementById('memo').value, 
+                    timestamp: new Date().toISOString()
+                });
+                saveData();
+                render();
+                guestForm.reset();
+                currentAmount = 0;
+                document.getElementById('current-amount-display').textContent = `0 원`;
+                validateForm();
+            });
+            
+            guaranteedHeadcountInput.addEventListener('input', (e) => {
+                guaranteedHeadcount = parseInt(e.target.value, 10) || 0;
+                saveData();
+                updateSummaryAndTickets();
+            });
+
+            guestList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const guestId = Number(e.target.dataset.id);
+                    if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
+                        guests = guests.filter(g => g.id !== guestId);
+                        saveData();
+                        render();
+                    }
+                }
+            });
+
+            searchBox.addEventListener('input', (e) => { searchTerm = e.target.value; render(); });
+            filterButtons.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') { currentFilter = e.target.dataset.filter; render(); } });
+
+            exportCsvButton.addEventListener('click', () => {
+                if (guests.length === 0) { alert('내보낼 데이터가 없습니다.'); return; }
+                const headers = ['구분', '이름', '금액', '관계', '식권 수', '메모'];
+                const csvContent = [
+                    headers.join(','),
+                    ...guests.map(g => [ `"${g.side}"`, `"${g.name}"`, g.amount, `"${g.relationship}"`, g.tickets, `"${(g.memo || '').replace(/"/g, '""')}"` ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                const dateString = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                link.setAttribute('download', `축의금_장부_${dateString}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // --- 초기화 ---
+            loadData();
+            render();
+            applyBlurStates();
+            validateForm();
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1011 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>축의금 관리 장부 - Wedding Gift Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'sans': ['Inter', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+                }
+            }
+        }
+    };
+    </script>
+    
+    <style>
+        :root {
+            /* Classic Blue Theme */
+            --theme-primary: #3B82F6;
+            --theme-primary-dark: #1E40AF;
+            --theme-primary-light: #93C5FD;
+            --theme-secondary: #6366F1;
+            --theme-accent: #F59E0B;
+            --theme-background: #F8FAFC;
+            --theme-surface: #FFFFFF;
+            --theme-surface-dark: #1E293B;
+            --theme-text: #1F2937;
+            --theme-text-light: #6B7280;
+            --theme-border: #E5E7EB;
+        }
+
+        [data-theme="wedding-rose"] {
+            --theme-primary: #F43F5E;
+            --theme-primary-dark: #BE185D;
+            --theme-primary-light: #FDA4AF;
+            --theme-secondary: #EC4899;
+            --theme-accent: #F59E0B;
+            --theme-background: #FFF1F2;
+            --theme-surface: #FFFFFF;
+        }
+
+        [data-theme="elegant-purple"] {
+            --theme-primary: #8B5CF6;
+            --theme-primary-dark: #7C3AED;
+            --theme-primary-light: #C4B5FD;
+            --theme-secondary: #A855F7;
+            --theme-accent: #F59E0B;
+            --theme-background: #FAF5FF;
+            --theme-surface: #FFFFFF;
+        }
+
+        [data-theme="modern-green"] {
+            --theme-primary: #10B981;
+            --theme-primary-dark: #059669;
+            --theme-primary-light: #6EE7B7;
+            --theme-secondary: #14B8A6;
+            --theme-accent: #F59E0B;
+            --theme-background: #ECFDF5;
+            --theme-surface: #FFFFFF;
+        }
+
+        [data-theme="luxury-gold"] {
+            --theme-primary: #F59E0B;
+            --theme-primary-dark: #D97706;
+            --theme-primary-light: #FCD34D;
+            --theme-secondary: #F97316;
+            --theme-accent: #8B5CF6;
+            --theme-background: #FFFBEB;
+            --theme-surface: #FFFFFF;
+        }
+
+        .dark {
+            --theme-background: #0F172A;
+            --theme-surface: #1E293B;
+            --theme-surface-dark: #334155;
+            --theme-text: #F1F5F9;
+            --theme-text-light: #94A3B8;
+            --theme-border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
+            background-color: var(--theme-background);
+            color: var(--theme-text);
+            transition: all 0.3s ease;
+        }
+
+        .theme-surface {
+            background-color: var(--theme-surface);
+            border-color: var(--theme-border);
+        }
+
+        .theme-primary {
+            background-color: var(--theme-primary);
+        }
+
+        .theme-primary-hover:hover {
+            background-color: var(--theme-primary-dark);
+        }
+
+        .theme-text {
+            color: var(--theme-text);
+        }
+
+        .theme-text-light {
+            color: var(--theme-text-light);
+        }
+
+        .theme-border {
+            border-color: var(--theme-border);
+        }
+
+        .blurred-content {
+            filter: blur(8px);
+            transition: filter 0.3s ease-in-out;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .table-container {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: var(--theme-background);
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: var(--theme-border);
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: var(--theme-text-light);
+        }
+
+        .relationship-btn.selected {
+            background-color: var(--theme-primary);
+            color: white;
+            border-color: var(--theme-primary);
+        }
+
+        .filter-btn.active {
+            background-color: var(--theme-primary);
+            color: white;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-modal {
+            backdrop-filter: blur(8px);
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .table-container {
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- @COMPONENT: MainApp -->
+    <div id="app" class="min-h-screen transition-all duration-300" data-theme="classic-blue">
+        
+        <!-- Header -->
+        <!-- @COMPONENT: Header -->
+        <header class="theme-surface border-b theme-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-80">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-2 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl md:text-2xl font-bold theme-text" data-i18n="app.title">축의금 관리 장부</h1>
+                            <p class="text-sm theme-text-light" data-i18n="app.subtitle">Wedding Gift Manager</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <!-- Language Selector -->
+                        <div class="relative">
+                            <button id="language-btn" class="p-2 rounded-lg theme-surface border theme-border hover:bg-opacity-80 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 theme-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Dark Mode Toggle -->
+                        <button id="dark-mode-toggle" class="p-2 rounded-lg theme-surface border theme-border hover:bg-opacity-80 transition-all">
+                            <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 theme-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 theme-text hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </button>
+
+                        <!-- Settings Button -->
+                        <button id="settings-btn" class="p-2 rounded-lg theme-surface border theme-border hover:bg-opacity-80 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 theme-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-6 max-w-7xl">
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                
+                <!-- Left Sidebar - Input Form -->
+                <!-- @COMPONENT: InputForm -->
+                <div class="xl:col-span-4">
+                    <div class="theme-surface rounded-2xl shadow-lg border theme-border p-6 sticky top-24 fade-in">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold theme-text" data-i18n="form.title">하객 정보 추가</h2>
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <form id="guest-form" class="space-y-5">
+                            <!-- Name Input -->
+                            <div>
+                                <label for="name" class="block text-sm font-medium theme-text mb-2" data-i18n="form.name">이름</label>
+                                <input type="text" id="name" name="name" required 
+                                       class="w-full px-4 py-3 theme-surface border theme-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                       data-i18n-placeholder="form.name_placeholder">
+                            </div>
+                            
+                            <!-- Amount Input -->
+                            <div>
+                                <label class="block text-sm font-medium theme-text mb-2" data-i18n="form.amount">금액</label>
+                                <div class="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl text-center mb-3 border theme-border">
+                                    <span id="current-amount-display" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0 원</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" data-amount="10000" class="amount-btn px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all transform hover:scale-105 active:scale-95">
+                                        <span data-i18n="form.amount_10k">+ 1만원</span>
+                                    </button>
+                                    <button type="button" data-amount="50000" class="amount-btn px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all transform hover:scale-105 active:scale-95">
+                                        <span data-i18n="form.amount_50k">+ 5만원</span>
+                                    </button>
+                                    <button type="button" id="reset-amount-btn" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all transform hover:scale-105 active:scale-95">
+                                        <span data-i18n="form.reset">초기화</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Side Selection -->
+                            <div>
+                                <label for="side" class="block text-sm font-medium theme-text mb-2" data-i18n="form.side">구분</label>
+                                <select id="side" name="side" required class="w-full px-4 py-3 theme-surface border theme-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                    <option value="신랑" data-i18n="form.groom">신랑</option>
+                                    <option value="신부" data-i18n="form.bride">신부</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Relationship Icons -->
+                            <div>
+                                <label class="block text-sm font-medium theme-text mb-3" data-i18n="form.relationship">관계</label>
+                                <div id="relationship-icons" class="grid grid-cols-2 gap-3">
+                                    <button type="button" data-relationship="친구" class="relationship-btn flex flex-col items-center p-4 border-2 theme-border rounded-xl transition-all hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 21a6 6 0 006-6v-1a6 6 0 00-9-5.197" />
+                                        </svg>
+                                        <span class="text-sm font-medium theme-text" data-i18n="form.friend">친구</span>
+                                    </button>
+                                    <button type="button" data-relationship="직장" class="relationship-btn flex flex-col items-center p-4 border-2 theme-border rounded-xl transition-all hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 21h14a2 2 0 002-2v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2z" />
+                                        </svg>
+                                        <span class="text-sm font-medium theme-text" data-i18n="form.work">직장</span>
+                                    </button>
+                                    <button type="button" data-relationship="가족/친척" class="relationship-btn flex flex-col items-center p-4 border-2 theme-border rounded-xl transition-all hover:border-green-500 hover:bg-green-50 dark:hover:bg-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                        </svg>
+                                        <span class="text-sm font-medium theme-text" data-i18n="form.family">가족</span>
+                                    </button>
+                                    <button type="button" data-relationship="지인/기타" class="relationship-btn flex flex-col items-center p-4 border-2 theme-border rounded-xl transition-all hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span class="text-sm font-medium theme-text" data-i18n="form.other">기타</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Meal Tickets -->
+                            <div>
+                                <label class="block text-sm font-medium theme-text mb-2" data-i18n="form.tickets">불출 식권 수</label>
+                                <div class="p-4 bg-gradient-to-r from-green-50 to-teal-50 dark:from-gray-800 dark:to-gray-700 rounded-xl text-center mb-3 border theme-border">
+                                    <span id="current-tickets-display" class="text-2xl font-bold text-green-600 dark:text-green-400">0 장</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" data-tickets="1" class="ticket-btn px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-all transform hover:scale-105 active:scale-95">
+                                        <span data-i18n="form.ticket_1">+ 1장</span>
+                                    </button>
+                                    <button type="button" data-tickets="2" class="ticket-btn px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-all transform hover:scale-105 active:scale-95">
+                                        <span data-i18n="form.ticket_2">+ 2장</span>
+                                    </button>
+                                    <button type="button" id="reset-tickets-btn" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all transform hover:scale-105 active:scale-95">
+                                        <span data-i18n="form.reset">초기화</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Memo -->
+                            <div>
+                                <label for="memo" class="block text-sm font-medium theme-text mb-2" data-i18n="form.memo">메모</label>
+                                <input type="text" id="memo" name="memo" 
+                                       class="w-full px-4 py-3 theme-surface border theme-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                       data-i18n-placeholder="form.memo_placeholder">
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" id="add-guest-btn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-105 active:scale-95 text-lg shadow-lg">
+                                <span data-i18n="form.submit">추가하기</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: InputForm -->
+
+                <!-- Right Content Area -->
+                <div class="xl:col-span-8 space-y-6">
+                    
+                    <!-- Guest List -->
+                    <!-- @COMPONENT: GuestList -->
+                    <div class="theme-surface rounded-2xl shadow-lg border theme-border p-6 fade-in">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <h2 class="text-xl font-semibold theme-text" data-i18n="list.title">하객 목록</h2>
+                            <div class="flex items-center gap-3 w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-none">
+                                    <input type="search" id="search-box" 
+                                           class="w-full sm:w-64 px-4 py-2 pl-10 theme-surface border theme-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                           data-i18n-placeholder="list.search_placeholder">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 theme-text-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <button id="toggle-blur" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all transform hover:scale-105" title="데이터 블러 토글">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                                <button id="export-csv" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all transform hover:scale-105" data-i18n-title="list.export">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Buttons -->
+                        <div id="filter-buttons" class="flex flex-wrap gap-2 mb-6">
+                            <button data-filter="all" class="filter-btn active px-4 py-2 rounded-full text-sm font-medium transition-all">
+                                <span data-i18n="filter.all">전체</span>
+                            </button>
+                            <button data-filter="groom" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all border theme-border">
+                                <span data-i18n="filter.groom">신랑측</span>
+                            </button>
+                            <button data-filter="bride" class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-all border theme-border">
+                                <span data-i18n="filter.bride">신부측</span>
+                            </button>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-container">
+                            <table class="w-full text-sm">
+                                <thead class="text-xs uppercase bg-gray-100 dark:bg-gray-800 sticky top-0">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left" data-i18n="table.side">구분</th>
+                                        <th scope="col" class="px-4 py-3 text-left" data-i18n="table.name">이름</th>
+                                        <th scope="col" class="px-4 py-3 text-right" data-i18n="table.amount">금액</th>
+                                        <th scope="col" class="px-4 py-3 text-left" data-i18n="table.relationship">관계</th>
+                                        <th scope="col" class="px-4 py-3 text-center" data-i18n="table.tickets">식권</th>
+                                        <th scope="col" class="px-4 py-3 text-center" data-i18n="table.actions">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guest-list" class="divide-y theme-border" data-mock="true">
+                                    <!-- Sample Data for Design Purposes -->
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">신랑</span>
+                                        </td>
+                                        <td class="px-4 py-3 font-medium theme-text">김철수</td>
+                                        <td class="px-4 py-3 text-right font-semibold text-green-600">50,000원</td>
+                                        <td class="px-4 py-3 theme-text-light">친구</td>
+                                        <td class="px-4 py-3 text-center">2장</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <button class="text-red-600 hover:text-red-800 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200">신부</span>
+                                        </td>
+                                        <td class="px-4 py-3 font-medium theme-text">이영희</td>
+                                        <td class="px-4 py-3 text-right font-semibold text-green-600">100,000원</td>
+                                        <td class="px-4 py-3 theme-text-light">가족/친척</td>
+                                        <td class="px-4 py-3 text-center">1장</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <button class="text-red-600 hover:text-red-800 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="empty-message" class="text-center theme-text-light py-10 hidden" data-i18n="list.empty">등록된 하객 정보가 없습니다.</p>
+                    </div>
+                    <!-- @END_COMPONENT: GuestList -->
+
+                    <!-- Statistics and Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Summary Statistics -->
+                        <!-- @COMPONENT: SummaryStats -->
+                        <div class="theme-surface rounded-2xl shadow-lg border theme-border p-6 fade-in">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold theme-text" data-i18n="stats.title">종합 현황</h3>
+                                <button id="toggle-summary-blur" class="text-gray-500 hover:text-gray-800 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="summary-content" class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <span class="font-medium theme-text" data-i18n="stats.total_guests">총 하객 수:</span>
+                                    <span id="total-guests" class="font-bold text-lg text-blue-600 dark:text-blue-400" data-mock="true">2 명</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                    <span class="font-medium theme-text" data-i18n="stats.total_amount">총 축의금:</span>
+                                    <span id="total-amount" class="font-bold text-lg text-green-600 dark:text-green-400" data-mock="true">150,000 원</span>
+                                </div>
+                                <div class="border-t theme-border pt-4 space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium theme-text-light" data-i18n="stats.groom_total">신랑측 총액:</span>
+                                        <span id="groom-total" class="font-semibold text-blue-600" data-mock="true">50,000 원</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium theme-text-light" data-i18n="stats.bride_total">신부측 총액:</span>
+                                        <span id="bride-total" class="font-semibold text-pink-600" data-mock="true">100,000 원</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium theme-text-light" data-i18n="stats.total_tickets">총 식권 수:</span>
+                                        <span id="total-tickets" class="font-semibold text-teal-600" data-mock="true">3 장</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- @END_COMPONENT: SummaryStats -->
+
+                        <!-- Chart Section -->
+                        <!-- @COMPONENT: Charts -->
+                        <div class="lg:col-span-2 theme-surface rounded-2xl shadow-lg border theme-border p-6 fade-in">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-semibold theme-text" data-i18n="chart.title">통계 차트</h3>
+                                <div class="flex space-x-2">
+                                    <button id="chart-pie-btn" class="chart-type-btn active px-3 py-1 text-sm rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                        <span data-i18n="chart.pie">원형</span>
+                                    </button>
+                                    <button id="chart-bar-btn" class="chart-type-btn px-3 py-1 text-sm rounded-lg theme-border border">
+                                        <span data-i18n="chart.bar">막대</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="statsChart" data-implementation="Implement Chart.js visualization here"></canvas>
+                            </div>
+                        </div>
+                        <!-- @END_COMPONENT: Charts -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <!-- @COMPONENT: SettingsModal -->
+        <div id="settings-modal" class="fixed inset-0 z-50 hidden settings-modal">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="theme-surface rounded-2xl shadow-2xl border theme-border p-6 w-full max-w-md">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold theme-text" data-i18n="settings.title">설정</h3>
+                        <button id="close-settings" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 theme-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Language Selection -->
+                        <div>
+                            <label class="block text-sm font-medium theme-text mb-3" data-i18n="settings.language">언어</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button data-lang="ko" class="language-btn active p-3 border-2 rounded-lg text-sm font-medium transition-all hover:border-blue-500">
+                                    🇰🇷 한국어
+                                </button>
+                                <button data-lang="en" class="language-btn p-3 border-2 theme-border rounded-lg text-sm font-medium transition-all hover:border-blue-500">
+                                    🇺🇸 English
+                                </button>
+                                <button data-lang="ja" class="language-btn p-3 border-2 theme-border rounded-lg text-sm font-medium transition-all hover:border-blue-500">
+                                    🇯🇵 日本語
+                                </button>
+                                <button data-lang="zh" class="language-btn p-3 border-2 theme-border rounded-lg text-sm font-medium transition-all hover:border-blue-500">
+                                    🇨🇳 中文
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Color Theme Selection -->
+                        <div>
+                            <label class="block text-sm font-medium theme-text mb-3" data-i18n="settings.color_theme">색상 테마</label>
+                            <div class="space-y-2">
+                                <button data-color-theme="classic-blue" class="color-theme-btn active w-full flex items-center p-3 border-2 rounded-lg transition-all hover:border-blue-500">
+                                    <div class="w-6 h-6 rounded-full bg-blue-500 mr-3"></div>
+                                    <span class="text-sm font-medium" data-i18n="settings.classic_blue">클래식 블루</span>
+                                </button>
+                                <button data-color-theme="wedding-rose" class="color-theme-btn w-full flex items-center p-3 border-2 theme-border rounded-lg transition-all hover:border-pink-500">
+                                    <div class="w-6 h-6 rounded-full bg-pink-500 mr-3"></div>
+                                    <span class="text-sm font-medium" data-i18n="settings.wedding_rose">웨딩 로즈</span>
+                                </button>
+                                <button data-color-theme="elegant-purple" class="color-theme-btn w-full flex items-center p-3 border-2 theme-border rounded-lg transition-all hover:border-purple-500">
+                                    <div class="w-6 h-6 rounded-full bg-purple-500 mr-3"></div>
+                                    <span class="text-sm font-medium" data-i18n="settings.elegant_purple">엘레간트 퍼플</span>
+                                </button>
+                                <button data-color-theme="modern-green" class="color-theme-btn w-full flex items-center p-3 border-2 theme-border rounded-lg transition-all hover:border-green-500">
+                                    <div class="w-6 h-6 rounded-full bg-green-500 mr-3"></div>
+                                    <span class="text-sm font-medium" data-i18n="settings.modern_green">모던 그린</span>
+                                </button>
+                                <button data-color-theme="luxury-gold" class="color-theme-btn w-full flex items-center p-3 border-2 theme-border rounded-lg transition-all hover:border-yellow-500">
+                                    <div class="w-6 h-6 rounded-full bg-yellow-500 mr-3"></div>
+                                    <span class="text-sm font-medium" data-i18n="settings.luxury_gold">럭셔리 골드</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: SettingsModal -->
+    </div>
+    <!-- @END_COMPONENT: MainApp -->
+
+    <script>
+        // TODO: Implement multi-language system, theme management, and form functionality
+        // TODO: Implement data persistence using localStorage
+        // TODO: Implement CSV export functionality
+        // TODO: Implement chart visualization using Chart.js
+        // TODO: Implement search and filtering functionality
+        
+        (function() {
+            // Multi-language strings
+            const translations = {
+                ko: {
+                    'app.title': '축의금 관리 장부',
+                    'app.subtitle': 'Wedding Gift Manager',
+                    'form.title': '하객 정보 추가',
+                    'form.name': '이름',
+                    'form.amount': '금액',
+                    'form.side': '구분',
+                    'form.relationship': '관계',
+                    'form.tickets': '불출 식권 수',
+                    'form.memo': '메모',
+                    'form.submit': '추가하기',
+                    'list.title': '하객 목록',
+                    'stats.title': '종합 현황'
+                    // Add more translations...
+                },
+                en: {
+                    'app.title': 'Wedding Gift Manager',
+                    'app.subtitle': 'Manage Your Wedding Gifts',
+                    'form.title': 'Add Guest Information',
+                    'form.name': 'Name',
+                    'form.amount': 'Amount',
+                    'form.side': 'Side',
+                    'form.relationship': 'Relationship',
+                    'form.tickets': 'Meal Tickets',
+                    'form.memo': 'Memo',
+                    'form.submit': 'Add Guest',
+                    'list.title': 'Guest List',
+                    'stats.title': 'Summary Statistics'
+                    // Add more translations...
+                }
+                // Add Japanese and Chinese translations...
+            };
+
+            // State management
+            let currentLang = localStorage.getItem('wedding-app-lang') || 'ko';
+            let currentTheme = localStorage.getItem('wedding-app-theme') || 'classic-blue';
+            let isDarkMode = localStorage.getItem('wedding-app-dark') === 'true';
+            let guests = JSON.parse(localStorage.getItem('wedding-app-guests') || '[]');
+            let currentAmount = 0;
+            let currentTickets = 0;
+            let selectedRelationship = '';
+            let isBlurred = false;
+
+            // Initialize app
+            function initApp() {
+                loadTheme();
+                loadLanguage();
+                setupEventListeners();
+                updateUI();
+                renderGuestList();
+                updateStatistics();
+                initChart();
+            }
+
+            // Theme management
+            function loadTheme() {
+                const app = document.getElementById('app');
+                app.setAttribute('data-theme', currentTheme);
+                if (isDarkMode) {
+                    app.classList.add('dark');
+                } else {
+                    app.classList.remove('dark');
+                }
+                updateDarkModeIcon();
+            }
+
+            function updateDarkModeIcon() {
+                const sunIcon = document.getElementById('sun-icon');
+                const moonIcon = document.getElementById('moon-icon');
+                if (isDarkMode) {
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+            }
+
+            // Language management
+            function loadLanguage() {
+                document.documentElement.lang = currentLang;
+                updateLanguageUI();
+            }
+
+            function updateLanguageUI() {
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (translations[currentLang] && translations[currentLang][key]) {
+                        element.textContent = translations[currentLang][key];
+                    }
+                });
+            }
+
+            // Event listeners
+            function setupEventListeners() {
+                // Dark mode toggle
+                document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+                    isDarkMode = !isDarkMode;
+                    localStorage.setItem('wedding-app-dark', isDarkMode);
+                    loadTheme();
+                });
+
+                // Settings modal
+                document.getElementById('settings-btn').addEventListener('click', () => {
+                    document.getElementById('settings-modal').classList.remove('hidden');
+                });
+
+                document.getElementById('close-settings').addEventListener('click', () => {
+                    document.getElementById('settings-modal').classList.add('hidden');
+                });
+
+                // Language selection
+                document.querySelectorAll('.language-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        currentLang = btn.getAttribute('data-lang');
+                        localStorage.setItem('wedding-app-lang', currentLang);
+                        loadLanguage();
+                        updateActiveButton(btn, '.language-btn');
+                    });
+                });
+
+                // Color theme selection
+                document.querySelectorAll('.color-theme-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        currentTheme = btn.getAttribute('data-color-theme');
+                        localStorage.setItem('wedding-app-theme', currentTheme);
+                        loadTheme();
+                        updateActiveButton(btn, '.color-theme-btn');
+                    });
+                });
+
+                // Amount buttons
+                document.querySelectorAll('.amount-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const amount = parseInt(btn.getAttribute('data-amount'));
+                        currentAmount += amount;
+                        updateAmountDisplay();
+                    });
+                });
+
+                document.getElementById('reset-amount-btn').addEventListener('click', () => {
+                    currentAmount = 0;
+                    updateAmountDisplay();
+                });
+
+                // Ticket buttons
+                document.querySelectorAll('.ticket-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tickets = parseInt(btn.getAttribute('data-tickets'));
+                        currentTickets += tickets;
+                        updateTicketsDisplay();
+                    });
+                });
+
+                document.getElementById('reset-tickets-btn').addEventListener('click', () => {
+                    currentTickets = 0;
+                    updateTicketsDisplay();
+                });
+
+                // Relationship selection
+                document.querySelectorAll('.relationship-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        selectedRelationship = btn.getAttribute('data-relationship');
+                        updateActiveButton(btn, '.relationship-btn');
+                    });
+                });
+
+                // Filter buttons
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const filter = btn.getAttribute('data-filter');
+                        filterGuests(filter);
+                        updateActiveButton(btn, '.filter-btn');
+                    });
+                });
+
+                // Blur toggle
+                document.getElementById('toggle-blur').addEventListener('click', () => {
+                    isBlurred = !isBlurred;
+                    toggleBlur();
+                });
+
+                // Form submission
+                document.getElementById('guest-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    addGuest();
+                });
+
+                // Search functionality
+                document.getElementById('search-box').addEventListener('input', (e) => {
+                    searchGuests(e.target.value);
+                });
+
+                // CSV export
+                document.getElementById('export-csv').addEventListener('click', () => {
+                    exportToCSV();
+                });
+            }
+
+            // UI update functions
+            function updateActiveButton(activeBtn, selector) {
+                document.querySelectorAll(selector).forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                activeBtn.classList.add('active');
+            }
+
+            function updateAmountDisplay() {
+                document.getElementById('current-amount-display').textContent = 
+                    formatCurrency(currentAmount);
+            }
+
+            function updateTicketsDisplay() {
+                document.getElementById('current-tickets-display').textContent = 
+                    `${currentTickets} 장`;
+            }
+
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('ko-KR').format(amount) + ' 원';
+            }
+
+            // Guest management
+            function addGuest() {
+                const name = document.getElementById('name').value;
+                const side = document.getElementById('side').value;
+                const memo = document.getElementById('memo').value;
+
+                if (!name || !selectedRelationship || currentAmount === 0) {
+                    alert('필수 정보를 모두 입력해주세요.');
+                    return;
+                }
+
+                const guest = {
+                    id: Date.now(),
+                    name,
+                    amount: currentAmount,
+                    side,
+                    relationship: selectedRelationship,
+                    tickets: currentTickets,
+                    memo,
+                    timestamp: new Date().toISOString()
+                };
+
+                guests.push(guest);
+                saveGuestsToStorage();
+                resetForm();
+                renderGuestList();
+                updateStatistics();
+            }
+
+            function removeGuest(id) {
+                guests = guests.filter(guest => guest.id !== id);
+                saveGuestsToStorage();
+                renderGuestList();
+                updateStatistics();
+            }
+
+            function saveGuestsToStorage() {
+                localStorage.setItem('wedding-app-guests', JSON.stringify(guests));
+            }
+
+            function resetForm() {
+                document.getElementById('guest-form').reset();
+                currentAmount = 0;
+                currentTickets = 0;
+                selectedRelationship = '';
+                updateAmountDisplay();
+                updateTicketsDisplay();
+                document.querySelectorAll('.relationship-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+            }
+
+            // UI rendering
+            function renderGuestList() {
+                const tbody = document.getElementById('guest-list');
+                const emptyMessage = document.getElementById('empty-message');
+                
+                if (guests.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyMessage.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyMessage.classList.add('hidden');
+                tbody.innerHTML = guests.map(guest => `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${guest.side === '신랑' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'}">
+                                ${guest.side}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 font-medium theme-text">${guest.name}</td>
+                        <td class="px-4 py-3 text-right font-semibold text-green-600">${formatCurrency(guest.amount)}</td>
+                        <td class="px-4 py-3 theme-text-light">${guest.relationship}</td>
+                        <td class="px-4 py-3 text-center">${guest.tickets}장</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="removeGuest(${guest.id})" class="text-red-600 hover:text-red-800 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function updateStatistics() {
+                const totalGuests = guests.length;
+                const totalAmount = guests.reduce((sum, guest) => sum + guest.amount, 0);
+                const groomTotal = guests.filter(g => g.side === '신랑').reduce((sum, guest) => sum + guest.amount, 0);
+                const brideTotal = guests.filter(g => g.side === '신부').reduce((sum, guest) => sum + guest.amount, 0);
+                const totalTickets = guests.reduce((sum, guest) => sum + guest.tickets, 0);
+
+                document.getElementById('total-guests').textContent = `${totalGuests} 명`;
+                document.getElementById('total-amount').textContent = formatCurrency(totalAmount);
+                document.getElementById('groom-total').textContent = formatCurrency(groomTotal);
+                document.getElementById('bride-total').textContent = formatCurrency(brideTotal);
+                document.getElementById('total-tickets').textContent = `${totalTickets} 장`;
+            }
+
+            // Search and filter functionality
+            function searchGuests(searchTerm) {
+                const rows = document.querySelectorAll('#guest-list tr');
+                rows.forEach(row => {
+                    const name = row.children[1].textContent.toLowerCase();
+                    if (name.includes(searchTerm.toLowerCase())) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            function filterGuests(filter) {
+                const rows = document.querySelectorAll('#guest-list tr');
+                rows.forEach(row => {
+                    const side = row.children[0].textContent.includes('신랑') ? 'groom' : 'bride';
+                    if (filter === 'all' || filter === side) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            // Blur functionality
+            function toggleBlur() {
+                const blurrableElements = document.querySelectorAll('#guest-list, #summary-content');
+                blurrableElements.forEach(element => {
+                    if (isBlurred) {
+                        element.classList.add('blurred-content');
+                    } else {
+                        element.classList.remove('blurred-content');
+                    }
+                });
+            }
+
+            // CSV Export
+            function exportToCSV() {
+                if (guests.length === 0) {
+                    alert('내보낼 데이터가 없습니다.');
+                    return;
+                }
+
+                const headers = ['구분', '이름', '금액', '관계', '식권', '메모', '등록일시'];
+                const csvContent = [
+                    headers.join(','),
+                    ...guests.map(guest => [
+                        guest.side,
+                        guest.name,
+                        guest.amount,
+                        guest.relationship,
+                        guest.tickets,
+                        guest.memo || '',
+                        new Date(guest.timestamp).toLocaleString('ko-KR')
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `축의금목록_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            }
+
+            // Chart initialization
+            function initChart() {
+                const ctx = document.getElementById('statsChart').getContext('2d');
+                // TODO: Initialize Chart.js here with guest data visualization
+                // Example: Pie chart showing bride vs groom amounts, bar chart showing amounts by relationship
+            }
+
+            function updateUI() {
+                updateAmountDisplay();
+                updateTicketsDisplay();
+            }
+
+            // Make removeGuest globally accessible
+            window.removeGuest = removeGuest;
+
+            // Initialize the application
+            initApp();
+        })();
+    </script>
+</body>
+</html>
